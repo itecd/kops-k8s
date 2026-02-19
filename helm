@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mychart.fullname" . }}-config
+data:
+  {{- /* 1. Get URL from values.yaml */ -}}
+  {{- $apiUrl := .Values.clusterApiUrl -}}
+
+  {{- /* 2. Extract substrings using your regex */ -}}
+  {{- /* Group 1: devocp4ec, Group 2: azcanc */ -}}
+  {{- $fields := regexFindAll "api\\.([^.]+)\\.([^.]+)" $apiUrl -}}
+  
+  {{- /* 3. Logic to join them with an underscore */ -}}
+  {{- if $fields -}}
+    {{- /* We use regexSubmatch to specifically grab the inner groups */ -}}
+    {{- $submatches := regexSubmatch "api\\.([^.]+)\\.([^.]+)" $apiUrl -}}
+    {{- $first := index $submatches 1 -}}
+    {{- $second := index $submatches 2 -}}
+    
+    {{- /* Define the variables */ -}}
+    {{- $keyName := printf "%s_%s" $first $second -}}
+    {{- $mount := $keyName -}}
+
+    {{- /* Final YAML Output */ -}}
+    keyname: {{ $keyName | quote }}
+    mount: {{ $mount | quote }}
+  {{- else -}}
+    keyname: "error_parsing_url"
+    mount: "error_parsing_url"
+  {{- end -}}
